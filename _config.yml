@@ -1,0 +1,10 @@
+title: Axel Forsman
+email: axelsfor@gmail.com
+description: >-
+    The blog of Axel Forsman.
+github_username: axelf4
+twitter_username: axelf41
+
+theme: minima
+plugins:
+  - jekyll-feed
