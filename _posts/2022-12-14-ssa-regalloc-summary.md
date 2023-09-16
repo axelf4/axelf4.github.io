@@ -5,7 +5,7 @@ date: 2022-12-14
 ---
 
 > This summary of "Register Allocation for programs in SSA-form" by Hack, Grund, and Goos[^hack06]
-> is adapted from my submission to the writing assignment
+> is adapted from my writing assignment submission
 > in the course DAT315 The computer scientist in society at Chalmers University of Technology.
 > The target audience is computer science students not necessarily having taken a compilers course.
 
@@ -19,10 +19,10 @@ for the register allocation phase of codegen.
 
 State-of-the-art imperative language compilers use *intermediate representations*
 based on control-flow graphs which are turned into SSA form,
-see figure 1.
+see Figure 1.
 Each node is a straight-line sequence of simple instructions called a *basic block*
 where jumps to and from only happen at the start and end of the block respectively.
-The SSA property further requires that each variable definition is assigned to only once.
+The SSA property further requires that each variable definition is assigned only once.
 This essentially gives immutability,
 and so for example the dead-code elimination optimization on code in SSA form
 is just a mark-and-sweep algorithm.
@@ -38,9 +38,9 @@ and adding parameters to each basic block.
 </figcaption>
 </figure>
 
-Looking at the example program in figure 1,
+Looking at the example program in Figure 1,
 we see that the non-SSA version uses two variables while the SSA version has more;
-both IR:s allow for an unbounded amount of variables.
+both IRs allow for an unbounded amount of variables.
 However, most physical computer architectures we may want to compile for
 only have a limited set of fast registers.
 To keep around values of variables beyond that,
@@ -53,7 +53,7 @@ This is a graph where the nodes are the variables,
 and two nodes share an edge if they are simultaneously *live*,
 meaning at some point in the program both variables have been defined earlier,
 and both will be used as inputs for later instructions.
-The interference graph for the earlier example program is shown in figure 2.
+The interference graph for the earlier example program is shown in Figure 2.
 The variables that interfere are those that cannot share the same register;
 writing one could overwrite the other that later at its use-site would be read as garbage.
 This means that allocating registers is solved by coloring the graph,
@@ -65,23 +65,23 @@ Each color will then correspond to a unique register.
 <img src="{{site.url}}/assets/ssa-regalloc-summary/interference-graph.svg" alt="Interference graph for earlier example program" style="display: block; margin: auto;" />
 <figcaption>
 Figure 2:
-The interference graph for the SSA form program in figure 1.
+The interference graph for the SSA form program in Figure 1.
 It is 2-colorable.
 </figcaption>
 </figure>
 
 The graph coloring approach for register allocation leads to the following algorithm,
 proposed by Briggs, Cooper, and Torczon[^briggs94]
-and shown in figure 3.
+and shown in Figure 3.
 First we build the interference graph and try to color it.
 If that fails, because too many registers were needed,
 we split or remove some live range
 by spilling a variable to the stack, essentially delegating it to slower memory,
 before retrying.
 Now building the full interference graph is time costly.
-Furthermore we want to choose variables to spill
+Furthermore, we want to choose variables to spill
 that are not used for a long time nor often, etc.
-and these criteria makes the problem of optimal spilling NP-complete.
+and these criteria make the problem of optimal spilling NP-complete.
 This all makes graph coloring register allocation complicated.
 
 <figure>
@@ -94,8 +94,8 @@ Graph-coloring register allocation as proposed by Briggs, Cooper, and Torczon.
 
 The idea of this paper is to use the fact that
 interference graphs of SSA form programs turn out to be *triangulated*,
-see figure 4,
-in order to simplify register allocation.
+see Figure 4,
+to simplify register allocation.
 It being simpler means more of a compiler's complexity budget
 can be spent on things that improve the performance of generated code,
 such as spilling more optimally.
@@ -123,7 +123,7 @@ equals the size of the largest *clique*,
 i.e. a subgraph where all nodes are connected;
 and (II) they are optimally colorable in O(n²)
 with respect to the number of nodes.
-This leads to the simpler algorithm shown in figure 5, where,
+This leads to the simpler algorithm shown in Figure 5, where,
 if destruction of the SSA property is delayed until after register allocation,
 all spilling can be done upfront.
 Whether spilling is necessary can be determined by
@@ -144,7 +144,7 @@ Unlike for non-SSA programs the steps may be done separately.
 *Dominance* is a property of SSA.
 A node *A* of an SSA CFG is said to *dominate* a node *B* (*A ≼ B*)
 if it is impossible to reach *B* without first executing *A*,
-see figure 6.
+see Figure 6.
 Two useful lemmas about the relation between dominance and interference
 given by Budimlic et al.[^budimlic02] are,
 where *𝓓ᵥ* is the definition of *v*:
@@ -162,7 +162,7 @@ Figure 6:
 In this example
 the definition of <code>i</code> dominates the definition of <code>j</code>
 since all program executions reaching the definition of <code>j</code>
-passes through the definition of <code>i</code>.
+pass through the definition of <code>i</code>.
 The live ranges of the two variables are given to the left.
 Note that the ranges overlap, i.e. the variables interfere.
 </figcaption>
@@ -171,7 +171,7 @@ Note that the ranges overlap, i.e. the variables interfere.
 Picture this algorithm for graph coloring explained in the paper:
 (I) Remove nodes one by one by always choosing a node *v*
 where *v* and its neighbors form a clique,
-continue until all nodes are exhausted; and then
+until all nodes are exhausted; and then
 (II) insert the nodes back in reverse order while coloring greedily,
 i.e. giving the new node a color not shared by its neighbors.
 The idea is that when reinserting a node,
@@ -195,7 +195,7 @@ That would require that *v* and its neighbors form a clique.
 Assume not, i.e. *v* has two neighbors *a*, *b* that do not interfere.
 For *a* we must have either *𝓓ₐ ≼ 𝓓ᵥ* or *𝓓ᵥ ≼ 𝓓ₐ* due to the first lemma,
 but the latter is impossible since *a* would then have been removed.
-Since *a*, *v* interfere - they are neighbors in interference graph -
+Since *a*, *v* interfere - they are neighbors in the interference graph -
 and *𝓓ₐ ≼ 𝓓ᵥ*, the second lemma says *a* must be live at *𝓓ᵥ*.
 But the same holds for *b*, meaning *a*, *b* are both live at the point *𝓓ᵥ* of the program,
 and so by definition they interfere which contradicts the assumption.
@@ -216,14 +216,14 @@ it has to check that each such set contains all variables
 live into each successor block or otherwise insert reloads,
 i.e. instructions that move the variable from the stack into a register.
 
-Furthermore the paper gives a heuristic algorithm for coalescing copies.
+Furthermore, the paper gives a heuristic algorithm for coalescing copies.
 Coalescing, the act of ensuring the source and destination of a copy instruction
-be allocated in the same register, making the copy superfluous,
+are allocated in the same register, making the copy superfluous,
 has been omitted from this summary for the sake of brevity.
 Read the paper if interested.
 
 The later paper Pereira and Palsberg[^pereira05] solves some of the shortcomings of this paper
-related to real world uses.
+related to real-world uses.
 One such shortcoming is pre-coloring of the graph:
 E.g. the AMD64 DIV instruction always outputs into the RAX and RDX registers,
 use two of those and one of the respective destination variables
@@ -233,12 +233,12 @@ Like how SSA basic block parameters can be equated with
 copies of the arguments to the parameter variables,
 even more copies are inserted -
 between each instruction and at the end of each basic block -
-to get so called *elementary form* programs.
+to get so-called *elementary form* programs.
 These elementary programs and their elementary interference graphs
 then have even nicer properties than triangulated interference graphs.
 
 The result of using elementary programs is a register allocator
-usable as a replacement for LLVM:s non-graph coloring register allocator,
+usable as a replacement for LLVMs non-graph coloring register allocator,
 comparable in terms of speed,
 that produces x86 code of similar quality
 to a slower state-of-the-art graph coloring register allocator.

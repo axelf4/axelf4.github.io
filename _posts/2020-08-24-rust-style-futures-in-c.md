@@ -7,10 +7,10 @@ description: "Implementing Rust-style futures in C"
 
 All networking applications essentially boil down to stringing together
 multiple asynchronous calls in the *right* way.
-Traditionally for programs written in C this would be done through
+Traditionally for programs written in C, this would be done by
 registering callbacks where the callee either handles the event itself
 or dispatches through a state machine.
-In such implementations however reasoning about memory safety
+In such implementations, however, reasoning about memory safety
 can be treacherous, with it sometimes requiring full-program knowledge.
 Futures, or promises, as they are also referred to,
 ease in that regard by allowing asynchronous programs
@@ -76,7 +76,7 @@ we just make sure to poll them again later -
 futures are lazy and do not make progress unless actively told to do so.
 No one knows better than the future itself when it should
 be polled again - *awoken* -
-so the context given to all futures allows them to awake their own task.
+so the context given to all futures allows them to awaken their own task.
 With many parallel tasks the additional complexity would make itself apparent here,
 but in our case something like
 ```c
@@ -150,7 +150,7 @@ The timer handle is made to hold a reference to the future in
 its user data field,
 so that the callback knows which future to toggle the status on.
 However this requires the future object to be pinned in memory,
-moving it would make the reference dangling.
+moving it would leave the reference dangling.
 Rust deals with this unsafety using the [Pin construct][rs-pin],
 that wraps a pointer type, `P`,
 and only permits operations that cannot move the pointee
@@ -165,8 +165,8 @@ only referring to futures with pointers to their static place in memory.
 
 Note that it is possible to get by with just one global `uv_timer_t`
 by recognizing that whenever the main future is awoken either:
-(I) A timer, necessarily the one with smallest timeout, fired;
-or (II) All timers need be dropped and reset, since the futures form a tree,
+(I) A timer fired, necessarily the one with the shortest timeout; or
+(II) All timers need to be dropped and reset, since the futures form a tree,
 as we will see.
 
 ## After you
@@ -182,10 +182,10 @@ and doing the same in C means playing the part of the Rust compiler.
 An adaptation of [Duff's device][duffs-device],
 as [described by Simon Tatham][Coroutines-in-C],
 can help cut down on the boilerplate.
-The idea is that with a `switch` statement enveloping the whole function-body,
+The idea is that with a `switch` statement enveloping the whole function body,
 you can yield by creating a unique label using the `__LINE__` macro
 where execution will begin upon reentry,
-setting the switch-expression as such, and returning.
+setting the switch expression as such, and returning.
 The following macros do just that
 ```c
 typedef unsigned Coroutine;
@@ -205,7 +205,7 @@ Awaiting then becomes
 that is, yielding until the given future is resolved.
 
 To illustrate, here is a future that prints four times to standard output,
-first thrice at one second intervals, and then again after two more seconds:
+first thrice at one-second intervals, and then again after two more seconds:
 ```c
 struct TestFuture {
 	struct Future future;
@@ -282,10 +282,10 @@ enum Poll testFuturePoll(struct Future *self, struct Context *ctx) {
 </tr>
 </table></div>
 Note that the local `i` had to be spilled to the future struct
-in order to persist across yield points,
+to persist across yield points,
 and that unions are used to show what variables are active at each step,
 and squeeze out that last driblet of performance even in the face of
-uncompromising undefined behaviour threats from all directions.
+uncompromising undefined behavior threats from all directions.
 
 ## Off to the races
 
@@ -294,7 +294,7 @@ using a future combinator whose poll method polls all of its children
 and either waits for all to complete - *joins* them,
 or selects the first to become ready.
 The latter is a tad more difficult, so let us focus on that.
-The reason is that after the first future has resolved,
+The reason is that after the first future has been resolved,
 the rest may still be running, their memory possibly referenced elsewhere.
 This is where the `drop()` method that we have skimmed over comes in.
 Dropping a pinned object should relax the constraint
@@ -350,10 +350,9 @@ enum Poll futureRacePoll(struct Future *self, struct Context *ctx) {
 ```
 
 One thing to keep in mind is that if your main future consists of
-a race in a loop, say between a 10 microsecond timer and a future
+a race in a loop, say between a ten-microsecond timer and a future
 that always opens a new socket the first time it is polled,
-then the socket is going to be teared down and reopened
-on every loop iteration.
+then the socket will be torn down and reopened on every loop iteration.
 To remedy this, either rethink if a single task is the right tool,
 or maybe have the socket be opened once on program startup instead -
 dropping or enqueuing received data while the future is not awaited.
@@ -374,14 +373,15 @@ Since Rust futures do not use vtables,
 awaiting a constant future will be completely optimized away
 (which is cool, at the least).
 
-For completeness, some of of the ways in which what has been described
+For completeness, some of the ways in which what has been described
 differs from how things are done in Rust are that
 in the Rust ecosystem, different parts of the event loop have been abstracted
 to allow one to pick and match:
 * The **Executor** is responsible for scheduling tasks on a set of threads.
+
   It will pass a custom [**Waker**][rs-Waker] in a [**Context**][rs-Context]
   to each future.
-  If then the future is concerned with I/O it hands the waker to
+  If the future is concerned with I/O it then hands the waker to:
 * The **Reactor** which listens on events from the operating system using
   [epoll], [IOCP], etc.
 
@@ -393,11 +393,9 @@ Needless to say,
 this all raises the question of why one would not just use Rust,
 but as someone considering this I am sure you have a crystal clear answer ;).
 Why stop at the halfway mark though?
-The logical next step after getting them feet wet
-is to add a full effects system,
+The logical next step after getting your feet wet is to add a full effects system,
 as described in [this technical report][algeff-in-c-tr].
-Till that becomes commonplace however,
-I will look Back to the Future as a useful pattern.
+Till that becomes commonplace, however, I will look Back to the Future as a useful pattern.
 
 [rs-Context]: https://doc.rust-lang.org/std/task/struct.Context.html
 [rs-Future]: https://doc.rust-lang.org/std/future/trait.Future.html
