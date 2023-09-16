@@ -3,7 +3,9 @@ email: axel@axelf.se
 description: >-
   My personal website.
 github_username: axelf4
-twitter_username: axelf41
+mastodon:
+  - username: axelf
+    instance: mastodon.social
 
 theme: minima
 plugins:
